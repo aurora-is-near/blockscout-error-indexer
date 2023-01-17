@@ -1,7 +1,7 @@
 GO = go
-# GOFLAGS = -ldflags="-s -w"
-# UPX = upx
-# UPXFLAGS = --quiet --best --lzma
+GOFLAGS = -ldflags="-s -w"
+UPX = upx
+UPXFLAGS = --quiet --best --lzma
 
 # The default target:
 
@@ -12,7 +12,7 @@ all: indexer
 # Output executables:
 
 indexer: main.go
-	CGO_ENABLED=0 $(GO) build
+	GOARCH=amd64 CGO_ENABLED=0 $(GO) build $(GOFLAGS) -o $@ $^ && $(UPX) $(UPXFLAGS) $@
 
 # Rules for development:
 

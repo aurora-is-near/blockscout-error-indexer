@@ -103,7 +103,7 @@ func indexTransactions(pgpool *pgxpool.Pool, client *rpc.Client, fromBlock uint6
 	for {
 		hashes := make([]string, 0)
 		err := pgpool.QueryRow(context.Background(),
-			"SELECT array_agg(hash::varchar) as hashes FROM transactions WHERE status = 0 AND error IS NULL LIMIT 100").Scan(&hashes)
+			"SELECT array_agg(hash::varchar) as hashes FROM transactions WHERE status = 0 AND error IS NULL LIMIT 1000").Scan(&hashes)
 		if err != nil {
 			continue
 		}
