@@ -9,6 +9,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unicode"
 
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
@@ -116,7 +117,6 @@ func indexTransactions(pgpool *pgxpool.Pool, client *rpc.Client, fromBlock uint6
 
 		for _, txHash := range hashes {
 			var resp Result
-
 			if err := client.Call(&resp, "debug_traceTransaction", strings.Replace(txHash, "\\", "0", 1)); err != nil {
 				log.Debug().Msg(fmt.Sprintf("Unable import errors for %v: %v\n", txHash, err))
 				updateTx(pgpool, txHash, goqu.Record{"error": "Unknown"})
@@ -148,9 +148,18 @@ func indexTransactions(pgpool *pgxpool.Pool, client *rpc.Client, fromBlock uint6
 func updateTx(pgpool *pgxpool.Pool, txHash string, record goqu.Record) {
 	updateSQL, _, _ := goqu.Dialect("postgres").From("transactions").
 		Where(goqu.C("hash").Eq(txHash)).Update().Set(record).ToSQL()
-	pgpool.Exec(context.Background(), updateSQL)
+	pgpool.Exec(context.Background(), sanitizeForSql(updateSQL))
 }
 
 func wait() {
 	time.Sleep(200 * time.Millisecond)
+}
+
+func sanitizeForSql(text string) string {
+	return strings.Map(func(r rune) rune {
+		if unicode.IsPrint(r) {
+			return r
+		}
+		return -1
+	}, text)
 }
